@@ -1,0 +1,108 @@
+:root {
+    --cor-fundo: #0f172a;
+    --cor-superficie: #1e293b;
+    --cor-texto: #e2e8f0;
+    --cor-suave: #94a3b8;
+    --cor-destaque: #f59e0b;
+    --raio: 12px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--cor-fundo);
+    color: var(--cor-texto);
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.container { width: min(1000px, 92%); margin: 0 auto; }
+
+/* Cabecalho e menu */
+.cabecalho { background: var(--cor-superficie); border-bottom: 1px solid #334155; }
+.cabecalho__conteudo { display: flex; align-items: center; justify-content: space-between; padding: 0.8rem 0; }
+.marca { display: flex; align-items: center; gap: 0.6rem; color: var(--cor-texto); text-decoration: none; font-weight: 700; font-size: 1.2rem; }
+.menu { display: flex; gap: 1.2rem; }
+.menu a { color: var(--cor-suave); text-decoration: none; padding: 0.3rem 0; border-bottom: 2px solid transparent; }
+.menu a:hover, .menu a.ativo { color: var(--cor-texto); border-bottom-color: var(--cor-destaque); }
+.menu-toggle { display: none; background: none; border: none; color: var(--cor-texto); font-size: 1.6rem; cursor: pointer; }
+
+/* Conteudo */
+.conteudo { flex: 1; padding: 2.5rem 0; }
+h1 { font-size: 2rem; margin-bottom: 0.8rem; }
+h2 { font-size: 1.3rem; margin: 1.5rem 0 0.6rem; }
+p { margin-bottom: 0.8rem; }
+code { background: #334155; padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.9em; }
+
+.hero { text-align: center; padding: 2rem 0; }
+.hero p { color: var(--cor-suave); max-width: 600px; margin: 0 auto 1.5rem; }
+
+.botao {
+    display: inline-block;
+    background: var(--cor-destaque);
+    color: #111827;
+    padding: 0.7rem 1.4rem;
+    border: none;
+    border-radius: var(--raio);
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+.botao:hover { filter: brightness(1.1); }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-top: 1rem; }
+.card { background: var(--cor-superficie); padding: 1.4rem; border-radius: var(--raio); border: 1px solid #334155; }
+.card h2 { margin-top: 0; color: var(--cor-destaque); }
+
+.relogio-box { text-align: center; margin-top: 2rem; color: var(--cor-suave); }
+#relogio { font-variant-numeric: tabular-nums; color: var(--cor-texto); font-weight: 600; }
+
+.etapas { padding-left: 1.4rem; }
+.etapas li { margin-bottom: 0.5rem; }
+
+.tags { list-style: none; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.tags li { background: var(--cor-superficie); border: 1px solid #334155; padding: 0.3rem 0.8rem; border-radius: 999px; }
+
+/* Formulario */
+.formulario { display: flex; flex-direction: column; gap: 0.4rem; max-width: 500px; }
+.formulario input, .formulario textarea {
+    background: var(--cor-superficie);
+    color: var(--cor-texto);
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 0.6rem;
+    font: inherit;
+    margin-bottom: 0.6rem;
+}
+.formulario .botao { align-self: flex-start; }
+.aviso { color: #4ade80; margin-top: 0.8rem; }
+
+/* Rodape */
+.rodape { background: var(--cor-superficie); border-top: 1px solid #334155; padding: 1.2rem 0; text-align: center; color: var(--cor-suave); }
+.rodape p { margin: 0; }
+.rodape strong { color: var(--cor-texto); }
+
+/* Celular */
+@media (max-width: 640px) {
+    .menu-toggle { display: block; }
+    .menu { display: none; position: absolute; top: 60px; right: 4%; flex-direction: column; background: var(--cor-superficie); padding: 1rem; border-radius: var(--raio); border: 1px solid #334155; }
+    .menu.aberto { display: flex; }
+}
+
+/* Mensagens (flash) */
+.alerta { padding: 0.8rem 1rem; border-radius: 8px; margin-bottom: 1.2rem; border: 1px solid; }
+.alerta--sucesso { background: #052e16; border-color: #166534; color: #4ade80; }
+.alerta--erro { background: #450a0a; border-color: #991b1b; color: #fca5a5; }
+
+/* Tabela da listagem */
+.tabela-box { overflow-x: auto; border: 1px solid #334155; border-radius: var(--raio); }
+.tabela { width: 100%; border-collapse: collapse; }
+.tabela th, .tabela td { padding: 0.6rem 0.8rem; text-align: left; border-bottom: 1px solid #334155; }
+.tabela th { background: var(--cor-superficie); color: var(--cor-destaque); }
+.tabela tbody tr:hover { background: #1e293b80; }
+.total, .vazio { margin-top: 1rem; color: var(--cor-suave); }
+.vazio a { color: var(--cor-destaque); }
+.fluxo { background: var(--cor-superficie); padding: 0.8rem; border-radius: 8px; }

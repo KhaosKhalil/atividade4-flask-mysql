@@ -1,0 +1,14 @@
+# Ambiente virtual (cada maquina cria o seu)
+venv/
+.venv/
+
+# Credenciais do banco: existem so na instancia App
+.env
+
+# Python
+__pycache__/
+*.pyc
+
+# NUNCA versionar chaves de acesso da AWS
+*.pem
+*.ppk

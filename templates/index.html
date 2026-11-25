@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Início{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1>Flask + MySQL em duas instâncias EC2</h1>
+    <p>A aplicação roda na instância App e grava os dados no MySQL da instância DB, pela rede privada da AWS.</p>
+    <a class="botao" href="{{ url_for('cadastro') }}">Fazer um cadastro</a>
+</section>
+
+<section class="cards">
+    <article class="card">
+        <h2>Instância App</h2>
+        <p>Servidor Flask acessível pela internet na porta 5000.</p>
+    </article>
+    <article class="card">
+        <h2>Instância DB</h2>
+        <p>MySQL na porta 3306, liberada somente para o Security Group da instância App.</p>
+    </article>
+    <article class="card">
+        <h2>Credenciais seguras</h2>
+        <p>Dados de acesso ao banco no arquivo <code>.env</code>, lido com <code>python-dotenv</code>.</p>
+    </article>
+</section>
+
+<section class="relogio-box">
+    <p>Hora no seu navegador: <span id="relogio">--:--:--</span></p>
+</section>
+{% endblock %}

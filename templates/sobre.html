@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Sobre{% endblock %}
+
+{% block content %}
+<h1>Sobre o projeto</h1>
+<p>Entrega da <strong>{{ atividade }}</strong>: arquitetura em duas camadas na AWS.</p>
+
+<h2>Arquitetura</h2>
+<p class="fluxo">Navegador &rarr; <code>http://IP_PUBLICO_APP:5000</code> &rarr; Flask (App) &rarr; <code>IP_PRIVADO_DB:3306</code> &rarr; MySQL (DB)</p>
+
+<h2>Etapas</h2>
+<ol class="etapas">
+    <li><strong>Instâncias:</strong> <code>app-khalil</code> (Flask) e <code>db-khalil</code> (MySQL), Ubuntu, mesma VPC e mesmo par de chaves.</li>
+    <li><strong>Security Groups:</strong> App libera 22 e 5000; DB libera 22 e 3306, sendo a 3306 aceita só a partir do Security Group da App.</li>
+    <li><strong>MySQL:</strong> <code>bind-address</code> aberto para a rede, banco <code>atividade4</code> e usuário próprio da aplicação, que só conecta do IP privado da App e só tem acesso a esse banco.</li>
+    <li><strong>Credenciais:</strong> no arquivo <code>.env</code> (fora do GitHub), carregado com <code>load_dotenv()</code>.</li>
+    <li><strong>Rotas:</strong> <code>/cadastro</code> insere com consulta parametrizada; <code>/listar</code> mostra os registros.</li>
+    <li><strong>Execução:</strong> Gunicorn em <code>0.0.0.0:5000</code> como serviço do systemd.</li>
+</ol>
+
+<h2>Tecnologias</h2>
+<ul class="tags">
+    <li>Python</li>
+    <li>Flask</li>
+    <li>PyMySQL</li>
+    <li>python-dotenv</li>
+    <li>MySQL</li>
+    <li>Gunicorn</li>
+    <li>AWS EC2</li>
+</ul>
+{% endblock %}

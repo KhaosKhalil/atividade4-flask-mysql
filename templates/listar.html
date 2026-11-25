@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Listar{% endblock %}
+
+{% block content %}
+<h1>Cadastros</h1>
+
+{% if registros %}
+<div class="tabela-box">
+    <table class="tabela">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Curso</th>
+                <th>Mensagem</th>
+                <th>Criado em</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in registros %}
+            <tr>
+                <td>{{ r.id }}</td>
+                <td>{{ r.nome }}</td>
+                <td>{{ r.email }}</td>
+                <td>{{ r.curso }}</td>
+                <td>{{ r.mensagem or '-' }}</td>
+                <td>{{ r.criado_em.strftime('%d/%m/%Y %H:%M') if r.criado_em else '' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<p class="total">Total: {{ registros|length }} registro(s).</p>
+{% else %}
+<p class="vazio">Nenhum cadastro encontrado. <a href="{{ url_for('cadastro') }}">Faça o primeiro cadastro</a>.</p>
+{% endif %}
+{% endblock %}

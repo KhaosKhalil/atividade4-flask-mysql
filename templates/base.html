@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Início{% endblock %} | webServer</title>
+    <link rel="icon" href="{{ url_for('static', filename='img/logo.svg') }}" type="image/svg+xml">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <!-- Cabecalho -->
+    <header class="cabecalho">
+        <div class="container cabecalho__conteudo">
+            <a class="marca" href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Logo" width="36" height="36">
+                <span>webServer</span>
+            </a>
+
+            <!-- Menu de navegacao -->
+            <button class="menu-toggle" id="menu-toggle" aria-label="Abrir menu" aria-expanded="false">&#9776;</button>
+            <nav class="menu" id="menu">
+                <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}ativo{% endif %}">Início</a>
+                <a href="{{ url_for('sobre') }}" class="{% if request.endpoint == 'sobre' %}ativo{% endif %}">Sobre</a>
+                <a href="{{ url_for('cadastro') }}" class="{% if request.endpoint == 'cadastro' %}ativo{% endif %}">Cadastro</a>
+                <a href="{{ url_for('listar') }}" class="{% if request.endpoint == 'listar' %}ativo{% endif %}">Listar</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Area de conteudo -->
+    <main class="container conteudo">
+        <!-- Mensagens de sucesso/erro (flash) -->
+        {% with mensagens = get_flashed_messages(with_categories=true) %}
+            {% for categoria, mensagem in mensagens %}
+                <p class="alerta alerta--{{ categoria }}">{{ mensagem }}</p>
+            {% endfor %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Rodape -->
+    <footer class="rodape">
+        <div class="container">
+            <p><strong>{{ nome_aluno }}</strong></p>
+            <p>{{ atividade }} &middot; {{ ano }}</p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
