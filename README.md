@@ -1,28 +1,52 @@
-# Atividade 4 – Flask + MySQL em instâncias EC2 separadas
+# Atividade 4 – Flask + MySQL com Docker
 
-Aplicação Flask (instância **App**) que grava e lista dados em um MySQL (instância **DB**). As duas conversam pela rede privada da AWS. O banco não fica exposto à internet e as credenciais ficam só no `.env` da App.
+Aplicação Flask que grava e lista dados num banco MySQL. A arquitetura é em **duas camadas**, montada com **Docker Compose** numa instância EC2: em vez de duas instâncias, cada camada é um **container**.
 
 ```
-Navegador → http://IP_PUBLICO_APP:5000 → Flask (App) → IP_PRIVADO_DB:3306 → MySQL (DB)
+Navegador → http://IP_PUBLICO:5000 → container web (Flask + Gunicorn) → db:3306 (rede interna do Docker) → container db (MySQL 8)
 ```
+
+| Camada | Container | O que faz | Porta exposta |
+|---|---|---|---|
+| App | `web` | Flask + Gunicorn | **5000** publicada para a internet |
+| DB | `db` | MySQL 8 (volume `dados-mysql`) | **nenhuma**: só o `web` alcança, pela `rede-interna` |
 
 Rodapé: **Khalil Ayoub de Lima Krayem – Atividade 4**.
 
 ## Estrutura
 
 ```
-├── app.py                 # app Flask, conexão com o MySQL (PyMySQL) e rotas
-├── requirements.txt       # Flask, python-dotenv, PyMySQL, Gunicorn (com versões)
-├── .env.example           # nomes das variáveis, sem valores
-├── .env                   # credenciais reais – só na instância App (no .gitignore)
-├── .gitignore             # venv/, .env, *.pem
-├── db/schema.sql          # tabela cadastros
-├── templates/             # base.html, index, sobre, cadastro, listar, 404
-├── static/                # css, js, img
-└── deploy/
-    ├── setup_db.sh        # instância DB: MySQL, bind-address, banco, usuário, tabela
-    └── setup_app.sh       # instância App: venv, dependências, .env, teste, serviço
+├── app.py               # app Flask, conexão com o MySQL (PyMySQL) e rotas
+├── requirements.txt     # Flask, python-dotenv, PyMySQL, Gunicorn (com versões)
+├── Dockerfile           # imagem do container web (python:3.12-slim + Gunicorn)
+├── docker-compose.yml   # serviços web e db, rede interna e volume
+├── .dockerignore        # .env e venv/ não entram na imagem
+├── .env.example         # nomes das variáveis, sem valores
+├── .env                 # credenciais reais – só no servidor (no .gitignore)
+├── .gitignore           # venv/, .env, *.pem
+├── db/schema.sql        # tabela cadastros (executada pelo MySQL na 1ª inicialização)
+├── templates/           # base.html, index, sobre, cadastro, listar, 404
+└── static/              # css, js, img
 ```
+
+## Segurança
+
+- **Banco não exposto:** o container `db` não publica a porta 3306. Só containers da `rede-interna` (o `web`) conseguem conectar. No Security Group da EC2 ficam liberadas só a 22 (SSH) e a 5000 (Flask).
+- **Usuário próprio, não root:** o MySQL cria `DB_USER` com acesso **só** ao banco `DB_NAME`. O root fica só para administração.
+- **Credenciais no `.env`:** o Flask lê com `load_dotenv()` e `os.getenv()`. O compose também usa o `.env` para criar o banco e o usuário. O `.env` está no `.gitignore` e no `.dockerignore`, então não vai para o GitHub nem para a imagem.
+- **SQL Injection:** o `INSERT` usa consulta parametrizada (`%s` + tupla).
+
+## Variáveis do `.env`
+
+| Variável | Conteúdo |
+|---|---|
+| `DB_HOST` | `db` (nome do serviço MySQL na rede interna) |
+| `DB_PORT` | `3306` |
+| `DB_USER` | usuário da aplicação |
+| `DB_PASSWORD` | senha desse usuário |
+| `DB_NAME` | `atividade4` |
+| `DB_ROOT_PASSWORD` | senha do root do MySQL (usada só pelo container `db`) |
+| `SECRET_KEY` | chave do Flask (mensagens flash) |
 
 ## Rotas
 
@@ -33,7 +57,39 @@ Rodapé: **Khalil Ayoub de Lima Krayem – Atividade 4**.
 | `/cadastro` | GET mostra o formulário; POST insere no banco (consulta parametrizada) e redireciona para `/listar` |
 | `/listar` | Lista todos os registros em tabela HTML (ou mensagem se estiver vazio) |
 
-A conexão é aberta em cada operação e fechada no `finally`.
+A conexão com o banco é aberta em cada operação e fechada no `finally`.
+
+## Como subir (Ubuntu na EC2)
+
+```bash
+# 1. Docker
+sudo apt-get update && sudo apt-get install -y docker.io docker-compose-v2 git
+
+# 2. Projeto
+git clone https://github.com/KhaosKhalil/atividade4-flask-mysql.git atividade4
+cd atividade4
+cp .env.example .env
+nano .env                      # preencha usuário, senhas e SECRET_KEY
+
+# 3. Containers
+sudo docker compose up -d --build
+sudo docker compose ps         # db (healthy) e web (Up)
+```
+
+Acesse `http://IP_PUBLICO:5000`. O Security Group precisa liberar a porta 5000.
+
+> Em instâncias pequenas (t3.micro, 1 GB) vale criar swap:
+> `sudo fallocate -l 1G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile`
+
+## Comandos úteis
+
+```bash
+sudo docker compose ps                     # status dos containers
+sudo docker compose logs -f web            # logs do Flask/Gunicorn
+sudo docker compose restart                # reinicia
+# SELECT direto no MySQL do container:
+sudo docker exec -it atividade4-db sh -c 'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" atividade4 -e "SELECT * FROM cadastros;"'
+```
 
 ## Tabela
 
@@ -47,106 +103,3 @@ CREATE TABLE cadastros (
     criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 ```
-
----
-
-## Passo a passo do deploy
-
-### Etapa 1 – Instâncias (console EC2)
-Crie **duas** instâncias Ubuntu Server, na mesma VPC e com o mesmo par de chaves:
-- `app-seunome` → anote o **IP público**
-- `db-seunome` → anote o **IP privado**
-
-### Etapa 2 – Security Groups
-
-| SG | Regra | Origem |
-|---|---|---|
-| App (`app-seunome-sg`) | 22/tcp SSH | 0.0.0.0/0 |
-| App | 5000/tcp Flask | 0.0.0.0/0 |
-| DB (`db-seunome-sg`) | 22/tcp SSH | 0.0.0.0/0 |
-| DB | 3306/tcp MySQL | **o Security Group da App** (nunca 0.0.0.0/0) |
-
-### Etapa 3 – MySQL (instância DB)
-Copie o projeto para a DB (`git clone ...`) e rode:
-
-```bash
-bash deploy/setup_db.sh IP_PRIVADO_DA_APP
-```
-
-O script pede a senha do usuário `app_user` sem mostrar na tela (12+ letras e números). Ele faz o seguinte:
-- instala o MySQL Server;
-- troca o `bind-address` para `0.0.0.0` e reinicia o serviço;
-- cria o banco `atividade4`;
-- cria o usuário `app_user`@`IP_PRIVADO_DA_APP` só com SELECT, INSERT, UPDATE e DELETE nesse banco;
-- cria a tabela.
-
-### Etapas 4 a 6 e 8 – App
-Na instância App:
-
-```bash
-git clone https://github.com/SEU_USUARIO/SEU_REPO.git atividade4
-cd atividade4
-bash deploy/setup_app.sh IP_PRIVADO_DO_DB
-```
-
-O script faz o seguinte:
-- instala Python, venv e `mysql-client`;
-- cria o venv e instala o `requirements.txt`;
-- cria o `.env` (pede a senha sem mostrar e aplica `chmod 600`);
-- **testa a conexão com o MySQL pelo IP privado**;
-- sobe o Gunicorn em `0.0.0.0:5000` como serviço `webserver`.
-
-Teste manual da conexão (Etapa 4):
-
-```bash
-mysql -h IP_PRIVADO_DO_DB -u app_user -p atividade4 -e "SHOW TABLES;"
-```
-
-Para conferir que a porta 3306 **não** abre pela internet (no seu PC, PowerShell):
-
-```powershell
-Test-NetConnection IP_PUBLICO_DO_DB -Port 3306
-```
-
-O resultado deve ser `TcpTestSucceeded : False`.
-
-### Etapa 8 – Testes
-1. Abra `http://IP_PUBLICO_APP:5000/cadastro` e cadastre **5 ou mais** registros.
-2. Confira em `http://IP_PUBLICO_APP:5000/listar`.
-3. Na DB, rode o SELECT e tire o print:
-   ```bash
-   sudo mysql atividade4 -e "SELECT * FROM cadastros;"
-   ```
-
-### Comandos úteis (App)
-
-```bash
-sudo systemctl status webserver
-sudo systemctl restart webserver
-sudo journalctl -u webserver -n 50
-```
-
-## Entrega (Teams)
-- `http://IP_PUBLICO_APP:5000`
-- `http://IP_PUBLICO_APP:5000/listar`
-- Link do repositório no GitHub (com `.env.example`, sem `.env`)
-- Print do SELECT na instância DB
-- Print das regras de entrada do Security Group da DB
-
----
-
-## Docker (Flask em container na instância App)
-
-O Flask roda num container Docker na instância **App**. O MySQL continua na instância **DB**, e o container acessa o banco pelo IP privado definido no `.env`.
-
-```bash
-# na instância App, dentro da pasta do projeto (com o .env criado)
-sudo apt-get install -y docker.io docker-compose-v2
-sudo docker compose up -d --build     # cria a imagem e sobe o container
-sudo docker ps                        # container atividade4-web na porta 5000
-sudo docker logs -f atividade4-web    # logs do Gunicorn
-```
-
-- `Dockerfile`: imagem `python:3.12-slim` + `requirements.txt` + Gunicorn em `0.0.0.0:5000`.
-- `docker-compose.yml`: serviço `web` com `env_file: .env`, porta `5000:5000` e `restart: always` (volta sozinho se a máquina reiniciar).
-- `.dockerignore`: o `.env` e o `venv/` **não** entram na imagem.

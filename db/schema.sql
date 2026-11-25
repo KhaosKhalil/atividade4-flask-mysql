@@ -1,5 +1,5 @@
 -- Tabela da aplicacao (Atividade 4).
--- Executada pelo deploy/setup_db.sh dentro do banco atividade4.
+-- Executada automaticamente pelo container MySQL na primeira inicializacao (docker-entrypoint-initdb.d).
 CREATE TABLE IF NOT EXISTS cadastros (
     id        INT AUTO_INCREMENT PRIMARY KEY,
     nome      VARCHAR(100) NOT NULL,

@@ -4,19 +4,19 @@
 
 {% block content %}
 <section class="hero">
-    <h1>Flask + MySQL em duas instâncias EC2</h1>
-    <p>A aplicação roda na instância App e grava os dados no MySQL da instância DB, pela rede privada da AWS.</p>
+    <h1>Flask + MySQL em containers Docker</h1>
+    <p>A aplicação roda no container <strong>web</strong> e grava os dados no MySQL do container <strong>db</strong>, pela rede interna do Docker.</p>
     <a class="botao" href="{{ url_for('cadastro') }}">Fazer um cadastro</a>
 </section>
 
 <section class="cards">
     <article class="card">
-        <h2>Instância App</h2>
-        <p>Servidor Flask acessível pela internet na porta 5000.</p>
+        <h2>Container web</h2>
+        <p>Flask + Gunicorn, acessível pela internet na porta 5000.</p>
     </article>
     <article class="card">
-        <h2>Instância DB</h2>
-        <p>MySQL na porta 3306, liberada somente para o Security Group da instância App.</p>
+        <h2>Container db</h2>
+        <p>MySQL 8 sem porta publicada: só o container web alcança o banco, pela rede interna.</p>
     </article>
     <article class="card">
         <h2>Credenciais seguras</h2>

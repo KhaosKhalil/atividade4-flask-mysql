@@ -1,4 +1,4 @@
-"""Atividade 4 - Aplicacao Flask e Banco de Dados MySQL em Instancias EC2 Separadas.
+"""Atividade 4 - Aplicacao Flask e Banco de Dados MySQL em containers Docker.
 
 Arquivo principal: cria o app Flask, a conexao com o MySQL e as rotas.
 As credenciais do banco ficam no arquivo .env (nunca no codigo-fonte).
@@ -18,11 +18,11 @@ app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY") or os.urandom(24)
 
 NOME_ALUNO = os.getenv("NOME_ALUNO", "Khalil Ayoub de Lima Krayem")
-ATIVIDADE = "Atividade 4 - Flask e MySQL em instâncias EC2 separadas"
+ATIVIDADE = "Atividade 4 - Flask e MySQL em containers Docker"
 
 
 def conectar():
-    """Abre uma conexao com o MySQL da instancia DB usando os dados do .env."""
+    """Abre uma conexao com o MySQL (container db) usando os dados do .env."""
     return pymysql.connect(
         host=os.getenv("DB_HOST"),
         port=int(os.getenv("DB_PORT", "3306")),
@@ -117,6 +117,6 @@ def pagina_nao_encontrada(erro):
 
 
 if __name__ == "__main__":
-    # host="0.0.0.0" aceita conexoes externas; porta 5000 liberada no Security Group.
+    # host="0.0.0.0" aceita conexoes externas; porta 5000 publicada pelo Docker e liberada no Security Group.
     port = int(os.getenv("PORT", "5000"))
     app.run(host="0.0.0.0", port=port, debug=False)

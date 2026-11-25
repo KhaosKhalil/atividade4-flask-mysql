@@ -1,11 +1,51 @@
-# Sobe o Flask em container na instancia App.
-# O MySQL continua na instancia DB (acessado pelo IP privado definido no .env).
+# Atividade 4 em Docker: a "instancia App" e a "instancia DB" viram 2 containers.
+#   web -> Flask + Gunicorn (porta 5000 publicada para a internet)
+#   db  -> MySQL 8 (SEM porta publicada: so o container web alcanca o banco)
+# Credenciais: tudo vem do arquivo .env (que NAO vai para o GitHub nem para a imagem).
 services:
+  db:
+    image: mysql:8.0
+    container_name: atividade4-db
+    # Configuracao enxuta para caber na t3.micro (1 GB de RAM) junto com o Flask
+    command:
+      - --innodb-buffer-pool-size=64M
+      - --performance-schema=OFF
+      - --max-connections=30
+      - --skip-name-resolve
+    mem_limit: 512m
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}        # cria o banco da aplicacao
+      MYSQL_USER: ${DB_USER}            # cria o usuario da aplicacao (nao e root)
+      MYSQL_PASSWORD: ${DB_PASSWORD}    # com privilegios so no banco ${DB_NAME}
+    volumes:
+      - dados-mysql:/var/lib/mysql                                   # dados persistem
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro # cria a tabela
+    networks:
+      - rede-interna
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: always
+
   web:
     build: .
     image: atividade4-web
     container_name: atividade4-web
-    env_file: .env
+    env_file: .env                      # DB_HOST=db (nome do servico na rede interna)
     ports:
       - "5000:5000"
+    networks:
+      - rede-interna
+    depends_on:
+      db:
+        condition: service_healthy      # so sobe depois que o MySQL estiver pronto
     restart: always
+
+networks:
+  rede-interna:
+
+volumes:
+  dados-mysql:
