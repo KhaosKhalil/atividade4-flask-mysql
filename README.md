@@ -132,3 +132,21 @@ sudo journalctl -u webserver -n 50
 - Link do repositório no GitHub (com `.env.example`, sem `.env`)
 - Print do SELECT na instância DB
 - Print das regras de entrada do Security Group da DB
+
+---
+
+## Docker (Flask em container na instância App)
+
+O Flask roda num container Docker na instância **App**. O MySQL continua na instância **DB**, e o container acessa o banco pelo IP privado definido no `.env`.
+
+```bash
+# na instância App, dentro da pasta do projeto (com o .env criado)
+sudo apt-get install -y docker.io docker-compose-v2
+sudo docker compose up -d --build     # cria a imagem e sobe o container
+sudo docker ps                        # container atividade4-web na porta 5000
+sudo docker logs -f atividade4-web    # logs do Gunicorn
+```
+
+- `Dockerfile`: imagem `python:3.12-slim` + `requirements.txt` + Gunicorn em `0.0.0.0:5000`.
+- `docker-compose.yml`: serviço `web` com `env_file: .env`, porta `5000:5000` e `restart: always` (volta sozinho se a máquina reiniciar).
+- `.dockerignore`: o `.env` e o `venv/` **não** entram na imagem.
