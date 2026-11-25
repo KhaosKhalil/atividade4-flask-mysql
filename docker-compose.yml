@@ -1,0 +1,11 @@
+# Sobe o Flask em container na instancia App.
+# O MySQL continua na instancia DB (acessado pelo IP privado definido no .env).
+services:
+  web:
+    build: .
+    image: atividade4-web
+    container_name: atividade4-web
+    env_file: .env
+    ports:
+      - "5000:5000"
+    restart: always
